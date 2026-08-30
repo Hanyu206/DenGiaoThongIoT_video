@@ -143,8 +143,7 @@
     <div class="header">
         <h1>Giám Sát & Điều Khiển Giao Thông (Video AI)</h1>
     </div>
-
-    <!-- KHỐI ĐÈN TÍN HIỆU & ĐẾM NGƯỢC -->
+    
     <div class="traffic-box">
         <div class="lights">
             <div class="light red" id="lightRed"></div>
@@ -156,8 +155,7 @@
             <div class="countdown-label" id="lblTrafficState">ĐANG KẾT NỐI...</div>
         </div>
     </div>
-
-    <!-- CÁC THÔNG SỐ TỪ IOT CLOUD -->
+    
     <div class="grid">
         <div class="card">
             <div class="card-title">Số Xe Phát Hiện</div>
@@ -182,7 +180,6 @@
         </div>
     </div>
 
-    <!-- NÚT ĐIỀU KHIỂN TỪ XA -->
     <button class="btn btn-priority" onclick="setPriority(1)">BẬT ƯU TIÊN (XE CẤP CỨU)</button>
     <button class="btn btn-auto" onclick="setPriority(0)">TỰ ĐỘNG THÍCH ỨNG</button>
 
@@ -200,7 +197,6 @@
     let phaHienTai = "XANH";
     let soGiayDemNguoc = 8;
 
-    // Chỉ hiển thị theo dữ liệu thật đọc từ V3/V4, không tự đếm lùi
     function capNhatGiaoDien() {
         const lRed = document.getElementById("lightRed");
         const lYel = document.getElementById("lightYellow");
@@ -256,7 +252,6 @@
         }
     }
 
-    // Đọc dữ liệu thật định kỳ từ Blynk Cloud
     async function docDuLieuBlynk() {
         try {
             const resStatus = await fetch(`${BASE_URL}/isHardwareConnected?token=${TOKEN}`);
@@ -267,7 +262,6 @@
                 }
             }
 
-            // Số xe phát hiện (V0) - trước đây là khoảng cách, giờ là số xe từ YOLO
             const resV0 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0`);
             if (resV0.ok) {
                 const soXe = parseInt(await resV0.text());
@@ -289,14 +283,12 @@
                 }
             }
 
-            // Thời gian đèn xanh - đọc thật từ V1, KHÔNG tự tính lại
             const resV1 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v1`);
             if (resV1.ok) {
                 thoiGianXanhCaiDat = parseInt(await resV1.text());
                 document.getElementById("valGreenTime").innerHTML = `${thoiGianXanhCaiDat} <span class="card-unit">s</span>`;
             }
 
-            // Chế độ ưu tiên (V2)
             const resV2 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v2`);
             if (resV2.ok) {
                 const prio = await resV2.text();
@@ -314,7 +306,6 @@
                 }
             }
 
-            // Pha đèn thật (V3) + giây còn lại thật (V4)
             const resV3 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v3`);
             const resV4 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v4`);
             if (resV3.ok && resV4.ok) {
