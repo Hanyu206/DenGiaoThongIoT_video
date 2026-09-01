@@ -60,7 +60,21 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
         .page { display: none; }
-        .page.active { display: block; }
+.page.active {
+    display: block;
+    animation: fadeInTab 0.25s ease;
+}
+
+@keyframes fadeInTab {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 
         .traffic-box {
             background: #f8fafc;
