@@ -81,7 +81,15 @@
             margin-top: 4px;
             font-weight: bold;
         }
-
+<div class="card" style="margin-bottom: 16px;">
+    <div class="card-title">Camera Giám Sát (AI Nhận Diện)</div>
+    <img id="videoFeed" src="http://127.0.0.1:5000/video_feed"
+         style="width:100%; border-radius:10px; margin-top:8px; display:block;"
+         onerror="this.style.display='none'; document.getElementById('videoOfflineMsg').style.display='block';">
+    <div id="videoOfflineMsg" style="display:none; color:#94a3b8; font-size:0.8rem; margin-top:8px;">
+        Video hiện không khả dụng (script Python chưa chạy)
+    </div>
+</div>
         .grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
