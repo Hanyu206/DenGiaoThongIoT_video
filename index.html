@@ -6,18 +6,18 @@
     <title>Trung Tâm Giám Sát & Điều Khiển Giao Thông IoT - Video</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
-      body {
-    font-family: 'Segoe UI', Roboto, sans-serif;
-    background-color: #f8fafc;
-    background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
-    background-size: 24px 24px;
-    color: #0f172a;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    padding: 20px;
-}
+        body {
+            font-family: 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            background-image: radial-gradient(circle, #cbd5e1 1px, transparent 1px);
+            background-size: 24px 24px;
+            color: #0f172a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
         .dashboard {
             background-color: #ffffff;
             width: 100%;
@@ -34,7 +34,35 @@
             margin-bottom: 18px;
             text-transform: uppercase;
         }
-        
+
+        /* THANH TAB CHUYỂN TRANG */
+        .tab-bar {
+            display: flex;
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 4px;
+            margin-bottom: 18px;
+        }
+        .tab-btn {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            background: transparent;
+            border-radius: 9px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #64748b;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .tab-btn.active {
+            background: #ffffff;
+            color: #0284c7;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+
         .traffic-box {
             background: #f8fafc;
             padding: 16px;
@@ -63,7 +91,7 @@
         .light.red { background-color: #ef4444; }
         .light.yellow { background-color: #eab308; }
         .light.green { background-color: #22c55e; }
-        
+
         .light.red.active { opacity: 1; box-shadow: 0 0 16px #ef4444; }
         .light.yellow.active { opacity: 1; box-shadow: 0 0 16px #eab308; }
         .light.green.active { opacity: 1; box-shadow: 0 0 16px #22c55e; }
@@ -135,6 +163,27 @@
         .btn-auto { background-color: #0284c7; color: white; }
         .btn-auto:hover { background-color: #0369a1; }
         .footer { text-align: center; font-size: 0.75rem; color: #94a3b8; margin-top: 10px; }
+
+        .video-card {
+            background-color: #f8fafc;
+            border-radius: 14px;
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+        #videoFeed {
+            width: 100%;
+            border-radius: 10px;
+            margin-top: 8px;
+            display: block;
+        }
+        #videoOfflineMsg {
+            display: none;
+            color: #94a3b8;
+            font-size: 0.85rem;
+            margin-top: 30px;
+            padding: 30px 0;
+        }
     </style>
 </head>
 <body>
@@ -143,55 +192,64 @@
     <div class="header">
         <h1>Giám Sát & Điều Khiển Giao Thông (Video AI)</h1>
     </div>
-    
-    <div class="traffic-box">
-        <div class="lights">
-            <div class="light red" id="lightRed"></div>
-            <div class="light yellow" id="lightYellow"></div>
-            <div class="light green" id="lightGreen"></div>
-        </div>
-        <div class="countdown-box">
-            <div class="countdown-val" id="valCountdown">--</div>
-            <div class="countdown-label" id="lblTrafficState">ĐANG KẾT NỐI...</div>
-        </div>
+
+    <!-- THANH TAB -->
+    <div class="tab-bar">
+        <button class="tab-btn active" id="tabBtnControl" onclick="chuyenTab('control')">Điều Khiển</button>
+        <button class="tab-btn" id="tabBtnVideo" onclick="chuyenTab('video')">Camera AI</button>
     </div>
-    <div class="card" style="margin-bottom: 16px;">
-    <div class="card-title">Camera Giám Sát (AI Nhận Diện)</div>
-    <img id="videoFeed" src="http://127.0.0.1:5000/video_feed"
-         style="width:100%; border-radius:10px; margin-top:8px; display:block;"
-         onerror="this.style.display='none'; document.getElementById('videoOfflineMsg').style.display='block';">
-    <div id="videoOfflineMsg" style="display:none; color:#94a3b8; font-size:0.8rem; margin-top:8px;">
-        Video hiện không khả dụng (script Python chưa chạy)
-    </div>
-</div>
-    <div class="grid">
-        <div class="card">
-            <div class="card-title">Số Xe Phát Hiện</div>
-            <div class="card-val" id="valSoXe">-- <span class="card-unit">xe</span></div>
-        </div>
 
-        <div class="card">
-            <div class="card-title">Thời Gian Chu Kỳ Xanh</div>
-            <div class="card-val" id="valGreenTime">-- <span class="card-unit">s</span></div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">Mật Độ Giao Thông</div>
-            <div class="card-val" id="valDensity" style="font-size: 1.1rem; color: #4ade80; padding-top: 4px;">--</div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">Chế Độ Hoạt Động</div>
-            <div style="margin-top: 4px;">
-                <span id="badgePriority" class="badge badge-auto">ĐANG KẾT NỐI...</span>
+    <!-- TRANG 1: ĐIỀU KHIỂN -->
+    <div class="page active" id="pageControl">
+        <div class="traffic-box">
+            <div class="lights">
+                <div class="light red" id="lightRed"></div>
+                <div class="light yellow" id="lightYellow"></div>
+                <div class="light green" id="lightGreen"></div>
+            </div>
+            <div class="countdown-box">
+                <div class="countdown-val" id="valCountdown">--</div>
+                <div class="countdown-label" id="lblTrafficState">ĐANG KẾT NỐI...</div>
             </div>
         </div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Số Xe Phát Hiện</div>
+                <div class="card-val" id="valSoXe">-- <span class="card-unit">xe</span></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Thời Gian Chu Kỳ Xanh</div>
+                <div class="card-val" id="valGreenTime">-- <span class="card-unit">s</span></div>
+            </div>
+            <div class="card">
+                <div class="card-title">Mật Độ Giao Thông</div>
+                <div class="card-val" id="valDensity" style="font-size: 1.1rem; color: #4ade80; padding-top: 4px;">--</div>
+            </div>
+            <div class="card">
+                <div class="card-title">Chế Độ Hoạt Động</div>
+                <div style="margin-top: 4px;">
+                    <span id="badgePriority" class="badge badge-auto">ĐANG KẾT NỐI...</span>
+                </div>
+            </div>
+        </div>
+
+        <button class="btn btn-priority" onclick="setPriority(1)">BẬT ƯU TIÊN (XE CẤP CỨU)</button>
+        <button class="btn btn-auto" onclick="setPriority(0)">TỰ ĐỘNG THÍCH ỨNG</button>
+
+        <div class="footer">Đồng bộ dữ liệu thời gian thực từ Blynk IoT Cloud</div>
     </div>
 
-    <button class="btn btn-priority" onclick="setPriority(1)">BẬT ƯU TIÊN (XE CẤP CỨU)</button>
-    <button class="btn btn-auto" onclick="setPriority(0)">TỰ ĐỘNG THÍCH ỨNG</button>
-
-    <div class="footer">Đồng bộ dữ liệu thời gian thực từ Blynk IoT Cloud (Nhận diện AI)</div>
+    <!-- TRANG 2: CAMERA / VIDEO -->
+    <div class="page" id="pageVideo">
+        <div class="video-card">
+            <div class="card-title">Camera Giám Sát (AI Nhận Diện Trực Tiếp)</div>
+            <img id="videoFeed" src="http://127.0.0.1:5000/video_feed"
+                 onerror="this.style.display='none'; document.getElementById('videoOfflineMsg').style.display='block';">
+            <div id="videoOfflineMsg">Video hiện không khả dụng (script Python chưa chạy)</div>
+        </div>
+        <div class="footer" style="margin-top: 16px;">Luồng video xử lý nhận diện AI theo thời gian thực</div>
+    </div>
 </div>
 
 <script>
@@ -204,6 +262,21 @@
     let lastSeenTime = 0;
     let phaHienTai = "XANH";
     let soGiayDemNguoc = 8;
+
+    function chuyenTab(tab) {
+        document.getElementById("pageControl").classList.remove("active");
+        document.getElementById("pageVideo").classList.remove("active");
+        document.getElementById("tabBtnControl").classList.remove("active");
+        document.getElementById("tabBtnVideo").classList.remove("active");
+
+        if (tab === "control") {
+            document.getElementById("pageControl").classList.add("active");
+            document.getElementById("tabBtnControl").classList.add("active");
+        } else {
+            document.getElementById("pageVideo").classList.add("active");
+            document.getElementById("tabBtnVideo").classList.add("active");
+        }
+    }
 
     function capNhatGiaoDien() {
         const lRed = document.getElementById("lightRed");
