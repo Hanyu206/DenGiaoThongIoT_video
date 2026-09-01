@@ -271,7 +271,9 @@
     let lastSeenTime = 0;
     let phaHienTai = "XANH";
     let soGiayDemNguoc = 8;
-
+    let soXeMoiNhat = 0;
+    let soXeDaChot = 0;
+    let phaTruoc = "";
     function chuyenTab(tab) {
         document.getElementById("pageControl").classList.remove("active");
         document.getElementById("pageVideo").classList.remove("active");
@@ -314,7 +316,34 @@
         lRed.className = "light red";
         lYel.className = "light yellow";
         lGrn.className = "light green";
+isConnected = true;
 
+lRed.className = "light red";
+lYel.className = "light yellow";
+lGrn.className = "light green";
+
+if (phaHienTai !== phaTruoc) {
+    if (phaHienTai === "XANH") {
+        soXeDaChot = soXeMoiNhat;
+    }
+    phaTruoc = phaHienTai;
+}
+
+document.getElementById("valSoXe").innerHTML = `${soXeDaChot} <span class="card-unit">xe</span>`;
+const densityEl = document.getElementById("valDensity");
+if (soXeDaChot >= 12) {
+    densityEl.innerText = "CAO (ÙN TẮC)";
+    densityEl.style.color = "#dc2626";
+} else if (soXeDaChot >= 6) {
+    densityEl.innerText = "TRUNG BÌNH";
+    densityEl.style.color = "#b45309";
+} else {
+    densityEl.innerText = "THẤP (VẮNG XE)";
+    densityEl.style.color = "#16a34a";
+}
+
+if (phaHienTai === "UU TIEN") {
+    ...
         if (phaHienTai === "UU TIEN") {
             lGrn.className = "light green active";
             lblState.innerText = "ƯU TIÊN CẤP CỨU";
@@ -353,26 +382,12 @@
             }
 
             const resV0 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0`);
-            if (resV0.ok) {
-                const soXe = parseInt(await resV0.text());
-                document.getElementById("valSoXe").innerHTML = `${soXe} <span class="card-unit">xe</span>`;
-
-                const densityEl = document.getElementById("valDensity");
-                if (isNaN(soXe)) {
-                    densityEl.innerText = "--";
-                    densityEl.style.color = "#64748b";
-                } else if (soXe >= 12) {
-                    densityEl.innerText = "CAO (ÙN TẮC)";
-                    densityEl.style.color = "#dc2626";
-                } else if (soXe >= 6) {
-                    densityEl.innerText = "TRUNG BÌNH";
-                    densityEl.style.color = "#b45309";
-                } else {
-                    densityEl.innerText = "THẤP (VẮNG XE)";
-                    densityEl.style.color = "#16a34a";
-                }
-            }
-
+if (resV0.ok) {
+    const soXe = parseInt(await resV0.text());
+    if (!isNaN(soXe)) {
+        soXeMoiNhat = soXe;
+    }
+}
             const resV1 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v1`);
             if (resV1.ok) {
                 thoiGianXanhCaiDat = parseInt(await resV1.text());
