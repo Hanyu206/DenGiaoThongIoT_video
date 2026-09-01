@@ -412,21 +412,15 @@
 
     setInterval(capNhatGiaoDien, 1000);
     setInterval(docDuLieuBlynk, 1000);
-let daKetNoiVideo = false;
-
-function thuKetNoiVideo() {
-    if (daKetNoiVideo) return; // đã kết nối rồi thì không thử lại nữa (tránh làm gián đoạn luồng đang chạy)
-
+function capNhatAnhVideo() {
     const img = document.getElementById("videoFeed");
     const offlineMsg = document.getElementById("videoOfflineMsg");
 
     img.onload = function () {
-        daKetNoiVideo = true;
         img.style.display = "block";
         offlineMsg.style.display = "none";
     };
     img.onerror = function () {
-        daKetNoiVideo = false;
         img.style.display = "none";
         offlineMsg.style.display = "block";
     };
@@ -434,8 +428,8 @@ function thuKetNoiVideo() {
     img.src = "https://direction-termination-trucks-thermal.trycloudflare.com/snapshot?t=" + Date.now();
 }
 
-setInterval(thuKetNoiVideo, 3000);
-thuKetNoiVideo();
+setInterval(capNhatAnhVideo, 300);
+capNhatAnhVideo();
     docDuLieuBlynk();
 </script>
 
