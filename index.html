@@ -60,21 +60,14 @@
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
         .page { display: none; }
-.page.active {
-    display: block;
-    animation: fadeInTab 0.25s ease;
-}
-
-@keyframes fadeInTab {
-    from {
-        opacity: 0;
-        transform: translateY(6px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
+        .page.active {
+            display: block;
+            animation: fadeInTab 0.25s ease;
+        }
+        @keyframes fadeInTab {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .traffic-box {
             background: #f8fafc;
@@ -253,8 +246,7 @@
     <div class="page" id="pageVideo">
         <div class="video-card">
             <div class="card-title">Camera Giám Sát (AI Nhận Diện Trực Tiếp)</div>
-            <img id="videoFeed" src="http://127.0.0.1:5000/video_feed"
-                 onerror="this.style.display='none'; document.getElementById('videoOfflineMsg').style.display='block';">
+            <img id="videoFeed" style="display:none;">
             <div id="videoOfflineMsg">Video hiện không khả dụng (script Python chưa chạy)</div>
         </div>
         <div class="footer" style="margin-top: 16px;">Luồng video xử lý nhận diện AI theo thời gian thực</div>
@@ -271,9 +263,11 @@
     let lastSeenTime = 0;
     let phaHienTai = "XANH";
     let soGiayDemNguoc = 8;
+
     let soXeMoiNhat = 0;
     let soXeDaChot = 0;
     let phaTruoc = "";
+
     function chuyenTab(tab) {
         document.getElementById("pageControl").classList.remove("active");
         document.getElementById("pageVideo").classList.remove("active");
@@ -316,34 +310,27 @@
         lRed.className = "light red";
         lYel.className = "light yellow";
         lGrn.className = "light green";
-isConnected = true;
 
-lRed.className = "light red";
-lYel.className = "light yellow";
-lGrn.className = "light green";
+        if (phaHienTai !== phaTruoc) {
+            if (phaHienTai === "XANH") {
+                soXeDaChot = soXeMoiNhat;
+            }
+            phaTruoc = phaHienTai;
+        }
 
-if (phaHienTai !== phaTruoc) {
-    if (phaHienTai === "XANH") {
-        soXeDaChot = soXeMoiNhat;
-    }
-    phaTruoc = phaHienTai;
-}
+        document.getElementById("valSoXe").innerHTML = `${soXeDaChot} <span class="card-unit">xe</span>`;
+        const densityEl = document.getElementById("valDensity");
+        if (soXeDaChot >= 12) {
+            densityEl.innerText = "CAO (ÙN TẮC)";
+            densityEl.style.color = "#dc2626";
+        } else if (soXeDaChot >= 6) {
+            densityEl.innerText = "TRUNG BÌNH";
+            densityEl.style.color = "#b45309";
+        } else {
+            densityEl.innerText = "THẤP (VẮNG XE)";
+            densityEl.style.color = "#16a34a";
+        }
 
-document.getElementById("valSoXe").innerHTML = `${soXeDaChot} <span class="card-unit">xe</span>`;
-const densityEl = document.getElementById("valDensity");
-if (soXeDaChot >= 12) {
-    densityEl.innerText = "CAO (ÙN TẮC)";
-    densityEl.style.color = "#dc2626";
-} else if (soXeDaChot >= 6) {
-    densityEl.innerText = "TRUNG BÌNH";
-    densityEl.style.color = "#b45309";
-} else {
-    densityEl.innerText = "THẤP (VẮNG XE)";
-    densityEl.style.color = "#16a34a";
-}
-
-if (phaHienTai === "UU TIEN") {
-    ...
         if (phaHienTai === "UU TIEN") {
             lGrn.className = "light green active";
             lblState.innerText = "ƯU TIÊN CẤP CỨU";
@@ -382,12 +369,13 @@ if (phaHienTai === "UU TIEN") {
             }
 
             const resV0 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0`);
-if (resV0.ok) {
-    const soXe = parseInt(await resV0.text());
-    if (!isNaN(soXe)) {
-        soXeMoiNhat = soXe;
-    }
-}
+            if (resV0.ok) {
+                const soXe = parseInt(await resV0.text());
+                if (!isNaN(soXe)) {
+                    soXeMoiNhat = soXe;
+                }
+            }
+
             const resV1 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v1`);
             if (resV1.ok) {
                 thoiGianXanhCaiDat = parseInt(await resV1.text());
@@ -435,33 +423,34 @@ if (resV0.ok) {
         }
     }
 
+    let daKetNoiVideo = false;
+
+    function thuKetNoiVideo() {
+        if (daKetNoiVideo) return;
+
+        const img = document.getElementById("videoFeed");
+        const offlineMsg = document.getElementById("videoOfflineMsg");
+
+        img.onload = function () {
+            daKetNoiVideo = true;
+            img.style.display = "block";
+            offlineMsg.style.display = "none";
+        };
+        img.onerror = function () {
+            daKetNoiVideo = false;
+            img.style.display = "none";
+            offlineMsg.style.display = "block";
+        };
+
+        img.src = "http://127.0.0.1:5000/video_feed?t=" + Date.now();
+    }
+
     setInterval(capNhatGiaoDien, 1000);
     setInterval(docDuLieuBlynk, 1000);
-let daKetNoiVideo = false;
+    setInterval(thuKetNoiVideo, 3000);
 
-function thuKetNoiVideo() {
-    if (daKetNoiVideo) return; // đã kết nối ổn rồi thì không thử lại nữa, tránh làm gián đoạn luồng đang chạy
-
-    const img = document.getElementById("videoFeed");
-    const offlineMsg = document.getElementById("videoOfflineMsg");
-
-    img.onload = function () {
-        daKetNoiVideo = true;
-        img.style.display = "block";
-        offlineMsg.style.display = "none";
-    };
-    img.onerror = function () {
-        daKetNoiVideo = false;
-        img.style.display = "none";
-        offlineMsg.style.display = "block";
-    };
-
-    img.src = "http://127.0.0.1:5000/video_feed?t=" + Date.now();
-}
-
-setInterval(thuKetNoiVideo, 3000);
-thuKetNoiVideo();
     docDuLieuBlynk();
+    thuKetNoiVideo();
 </script>
 
 </body>
