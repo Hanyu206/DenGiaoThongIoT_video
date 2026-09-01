@@ -422,7 +422,30 @@
 
     setInterval(capNhatGiaoDien, 1000);
     setInterval(docDuLieuBlynk, 1000);
+let daKetNoiVideo = false;
 
+function thuKetNoiVideo() {
+    if (daKetNoiVideo) return; // đã kết nối ổn rồi thì không thử lại nữa, tránh làm gián đoạn luồng đang chạy
+
+    const img = document.getElementById("videoFeed");
+    const offlineMsg = document.getElementById("videoOfflineMsg");
+
+    img.onload = function () {
+        daKetNoiVideo = true;
+        img.style.display = "block";
+        offlineMsg.style.display = "none";
+    };
+    img.onerror = function () {
+        daKetNoiVideo = false;
+        img.style.display = "none";
+        offlineMsg.style.display = "block";
+    };
+
+    img.src = "http://127.0.0.1:5000/video_feed?t=" + Date.now();
+}
+
+setInterval(thuKetNoiVideo, 3000);
+thuKetNoiVideo();
     docDuLieuBlynk();
 </script>
 
