@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Giám Sát & Điều Khiển Giao Thông IoT</title>
+    <title>Trung Tâm Giám Sát & Điều Khiển Giao Thông IoT - Video</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -59,6 +59,8 @@
             color: #0284c7;
             box-shadow: 0 2px 6px rgba(0,0,0,0.08);
         }
+
+        .content-wrap { display: block; }
         .page { display: none; }
         .page.active {
             display: block;
@@ -189,6 +191,27 @@
             margin-top: 30px;
             padding: 30px 0;
         }
+
+        /* ===== GIAO DIỆN MÁY TÍNH (màn hình rộng >= 900px): 2 cột song song ===== */
+        @media (min-width: 900px) {
+            .dashboard {
+                max-width: 920px;
+            }
+            .tab-bar {
+                display: none;
+            }
+            .content-wrap {
+                display: flex;
+                gap: 20px;
+                align-items: flex-start;
+            }
+            .content-wrap .page {
+                display: block !important;
+                animation: none !important;
+                flex: 1;
+                min-width: 0;
+            }
+        }
     </style>
 </head>
 <body>
@@ -203,53 +226,55 @@
         <button class="tab-btn" id="tabBtnVideo" onclick="chuyenTab('video')">Camera AI</button>
     </div>
 
-    <div class="page active" id="pageControl">
-        <div class="traffic-box">
-            <div class="lights">
-                <div class="light red" id="lightRed"></div>
-                <div class="light yellow" id="lightYellow"></div>
-                <div class="light green" id="lightGreen"></div>
-            </div>
-            <div class="countdown-box">
-                <div class="countdown-val" id="valCountdown">--</div>
-                <div class="countdown-label" id="lblTrafficState">ĐANG KẾT NỐI...</div>
-            </div>
-        </div>
-
-        <div class="grid">
-            <div class="card">
-                <div class="card-title">Số Xe Phát Hiện</div>
-                <div class="card-val" id="valSoXe">-- <span class="card-unit">xe</span></div>
-            </div>
-            <div class="card">
-                <div class="card-title">Thời Gian Chu Kỳ Xanh</div>
-                <div class="card-val" id="valGreenTime">-- <span class="card-unit">s</span></div>
-            </div>
-            <div class="card">
-                <div class="card-title">Mật Độ Giao Thông</div>
-                <div class="card-val" id="valDensity" style="font-size: 1.1rem; color: #4ade80; padding-top: 4px;">--</div>
-            </div>
-            <div class="card">
-                <div class="card-title">Chế Độ Hoạt Động</div>
-                <div style="margin-top: 4px;">
-                    <span id="badgePriority" class="badge badge-auto">ĐANG KẾT NỐI...</span>
+    <div class="content-wrap">
+        <div class="page active" id="pageControl">
+            <div class="traffic-box">
+                <div class="lights">
+                    <div class="light red" id="lightRed"></div>
+                    <div class="light yellow" id="lightYellow"></div>
+                    <div class="light green" id="lightGreen"></div>
+                </div>
+                <div class="countdown-box">
+                    <div class="countdown-val" id="valCountdown">--</div>
+                    <div class="countdown-label" id="lblTrafficState">ĐANG KẾT NỐI...</div>
                 </div>
             </div>
+
+            <div class="grid">
+                <div class="card">
+                    <div class="card-title">Số Xe Phát Hiện</div>
+                    <div class="card-val" id="valSoXe">-- <span class="card-unit">xe</span></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Thời Gian Chu Kỳ Xanh</div>
+                    <div class="card-val" id="valGreenTime">-- <span class="card-unit">s</span></div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Mật Độ Giao Thông</div>
+                    <div class="card-val" id="valDensity" style="font-size: 1.1rem; color: #4ade80; padding-top: 4px;">--</div>
+                </div>
+                <div class="card">
+                    <div class="card-title">Chế Độ Hoạt Động</div>
+                    <div style="margin-top: 4px;">
+                        <span id="badgePriority" class="badge badge-auto">ĐANG KẾT NỐI...</span>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-priority" onclick="setPriority(1)">BẬT ƯU TIÊN (XE CẤP CỨU)</button>
+            <button class="btn btn-auto" onclick="setPriority(0)">TỰ ĐỘNG THÍCH ỨNG</button>
+
+            <div class="footer">Đồng bộ dữ liệu thời gian thực từ Blynk IoT Cloud</div>
         </div>
 
-        <button class="btn btn-priority" onclick="setPriority(1)">BẬT ƯU TIÊN (XE CẤP CỨU)</button>
-        <button class="btn btn-auto" onclick="setPriority(0)">TỰ ĐỘNG THÍCH ỨNG</button>
-
-        <div class="footer">Đồng bộ dữ liệu thời gian thực từ Blynk IoT Cloud</div>
-    </div>
-
-    <div class="page" id="pageVideo">
-        <div class="video-card">
-            <div class="card-title">Camera Giám Sát (AI Nhận Diện Trực Tiếp)</div>
-            <img id="videoFeed" style="display:none;">
-            <div id="videoOfflineMsg">Video hiện không khả dụng (script Python chưa chạy)</div>
+        <div class="page" id="pageVideo">
+            <div class="video-card">
+                <div class="card-title">Camera Giám Sát (AI Nhận Diện Trực Tiếp)</div>
+                <img id="videoFeed" style="display:none;">
+                <div id="videoOfflineMsg">Video hiện không khả dụng (script Python chưa chạy)</div>
+            </div>
+            <div class="footer" style="margin-top: 16px;">Luồng video xử lý nhận diện AI theo thời gian thực</div>
         </div>
-        <div class="footer" style="margin-top: 16px;">Luồng video xử lý nhận diện AI theo thời gian thực</div>
     </div>
 </div>
 
