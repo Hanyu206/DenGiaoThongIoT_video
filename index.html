@@ -361,6 +361,7 @@ let soLanDo = 0;
     const btn = document.getElementById('themeToggleBtn');
     const dangToi = document.body.classList.contains('dark');
     btn.innerText = dangToi ? '☀️' : '🌙';
+    btn.title = dangToi ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối';
 }
     function capNhatGiaoDien() {
         const lRed = document.getElementById("lightRed");
