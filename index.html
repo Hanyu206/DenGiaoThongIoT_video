@@ -270,10 +270,6 @@
         <div class="page" id="pageVideo">
     <div class="video-card">
         <div class="card-title">Camera Giám Sát (AI Nhận Diện Trực Tiếp)</div>
-        <div style="margin-bottom: 10px; text-align: center;">
-            <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px;">Xu hướng số xe (20 lần đo gần nhất)</div>
-            <canvas id="sparkline" width="400" height="60" style="width: 100%; height: 60px;"></canvas>
-        </div>
                 <img id="videoFeed" style="display:none;">
                 <div id="videoOfflineMsg">Video hiện không khả dụng (script Python chưa chạy)</div>
             </div>
@@ -296,8 +292,6 @@
     let soXeMoiNhat = 0;
     let soXeDaChot = 0;
     let phaTruoc = "";
-    let lichSuSoXe = [];
-const SO_DIEM_TOI_DA = 20;
     function chuyenTab(tab) {
         document.getElementById("pageControl").classList.remove("active");
         document.getElementById("pageVideo").classList.remove("active");
@@ -312,40 +306,6 @@ const SO_DIEM_TOI_DA = 20;
             document.getElementById("tabBtnVideo").classList.add("active");
         }
     }
-function veBieuDoMini() {
-    const canvas = document.getElementById("sparkline");
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    const w = canvas.width;
-    const h = canvas.height;
-
-    ctx.clearRect(0, 0, w, h);
-    if (lichSuSoXe.length < 2) return;
-
-    const max = Math.max(...lichSuSoXe, 1);
-    const min = Math.min(...lichSuSoXe, 0);
-    const range = max - min || 1;
-    const buoc = w / (SO_DIEM_TOI_DA - 1);
-
-    ctx.beginPath();
-    ctx.strokeStyle = "#0284c7";
-    ctx.lineWidth = 2;
-
-    lichSuSoXe.forEach((val, i) => {
-        const x = i * buoc;
-        const y = h - ((val - min) / range) * (h - 10) - 5;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-    });
-    ctx.stroke();
-
-    const lastX = (lichSuSoXe.length - 1) * buoc;
-    const lastY = h - ((lichSuSoXe[lichSuSoXe.length - 1] - min) / range) * (h - 10) - 5;
-    ctx.beginPath();
-    ctx.arc(lastX, lastY, 4, 0, Math.PI * 2);
-    ctx.fillStyle = "#0284c7";
-    ctx.fill();
-}
     function capNhatGiaoDien() {
         const lRed = document.getElementById("lightRed");
         const lYel = document.getElementById("lightYellow");
@@ -382,11 +342,6 @@ function veBieuDoMini() {
         }
 
         document.getElementById("valSoXe").innerHTML = `${soXeDaChot} <span class="card-unit">xe</span>`;
-        lichSuSoXe.push(soXeMoiNhat);
-if (lichSuSoXe.length > SO_DIEM_TOI_DA) {
-    lichSuSoXe.shift();
-}
-veBieuDoMini();
         const densityEl = document.getElementById("valDensity");
         if (soXeDaChot >= 12) {
             densityEl.innerText = "CAO (ÙN TẮC)";
