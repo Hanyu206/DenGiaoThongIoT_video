@@ -171,47 +171,53 @@
         .btn-auto:hover { background-color: #0369a1; }
         .footer { text-align: center; font-size: 0.75rem; color: #94a3b8; margin-top: 10px; }
 
-        .video-card {
-            background-color: #f8fafc;
-            border-radius: 14px;
-            padding: 14px;
-            border: 1px solid #e2e8f0;
-            text-align: center;
-        }
+       .video-card {
+    background-color: #f8fafc;
+    border-radius: 14px;
+    padding: 14px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
         #videoFeed {
             width: 100%;
             border-radius: 10px;
             margin-top: 8px;
             display: block;
         }
-        #videoOfflineMsg {
-            display: none;
-            color: #94a3b8;
-            font-size: 0.85rem;
-            margin-top: 30px;
-            padding: 30px 0;
-        }
+       #videoOfflineMsg {
+    display: none;
+    color: #94a3b8;
+    font-size: 0.85rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
 
         /* ===== GIAO DIỆN MÁY TÍNH (màn hình rộng >= 900px): 2 cột song song ===== */
         @media (min-width: 900px) {
-            .dashboard {
-                max-width: 920px;
-            }
-            .tab-bar {
-                display: none;
-            }
-            .content-wrap {
-                display: flex;
-                gap: 20px;
-                align-items: flex-end;
-            }
-            .content-wrap .page {
-                display: block !important;
-                animation: none !important;
-                flex: 1;
-                min-width: 0;
-            }
-        }
+    .dashboard {
+        max-width: 920px;
+    }
+    .tab-bar {
+        display: none;
+    }
+    .content-wrap {
+        display: flex;
+        gap: 20px;
+        align-items: stretch;
+    }
+    .content-wrap .page {
+        display: flex !important;
+        flex-direction: column;
+        animation: none !important;
+        flex: 1;
+        min-width: 0;
+    }
+}
     </style>
 </head>
 <body>
@@ -472,7 +478,7 @@ document.getElementById("valMatDoTB").innerHTML = `${trungBinh} <span class="car
         img.onerror = function () {
             daKetNoiVideo = false;
             img.style.display = "none";
-            offlineMsg.style.display = "block";
+            offlineMsg.style.display = "flex";
         };
 
         img.src = "http://127.0.0.1:5000/video_feed?t=" + Date.now();
