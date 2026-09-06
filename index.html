@@ -270,6 +270,10 @@
         <div class="page" id="pageVideo">
     <div class="video-card">
         <div class="card-title">Camera Giám Sát (AI Nhận Diện Trực Tiếp)</div>
+        <div class="card" style="margin-bottom: 10px;">
+    <div class="card-title">Mật Độ Trung Bình (Từ Lúc Bật Video)</div>
+    <div class="card-val" id="valMatDoTB">-- <span class="card-unit">xe</span></div>
+</div>
                 <img id="videoFeed" style="display:none;">
                 <div id="videoOfflineMsg">Video hiện không khả dụng (script Python chưa chạy)</div>
             </div>
@@ -292,6 +296,8 @@
     let soXeMoiNhat = 0;
     let soXeDaChot = 0;
     let phaTruoc = "";
+    let tongSoXe = 0;
+let soLanDo = 0;
     function chuyenTab(tab) {
         document.getElementById("pageControl").classList.remove("active");
         document.getElementById("pageVideo").classList.remove("active");
@@ -342,6 +348,10 @@
         }
 
         document.getElementById("valSoXe").innerHTML = `${soXeDaChot} <span class="card-unit">xe</span>`;
+        tongSoXe += soXeMoiNhat;
+soLanDo++;
+const trungBinh = (tongSoXe / soLanDo).toFixed(1);
+document.getElementById("valMatDoTB").innerHTML = `${trungBinh} <span class="card-unit">xe</span>`;
         const densityEl = document.getElementById("valDensity");
         if (soXeDaChot >= 12) {
             densityEl.innerText = "CAO (ÙN TẮC)";
