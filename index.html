@@ -26,6 +26,7 @@
             padding: 24px;
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
             border: 1px solid #e2e8f0;
+            position: relative;
         }
         .header h1 {
             font-size: 1.2rem;
@@ -223,6 +224,7 @@
 <body>
 
 <div class="dashboard">
+    <button id="themeToggleBtn" onclick="doiTheme()" style="position:absolute; top:14px; right:14px; width:34px; height:34px; border-radius:50%; border:1px solid #e2e8f0; background:#f8fafc; cursor:pointer; font-size:1rem;">🌙</button>
     <div class="header">
         <h1>Giám Sát & Điều Khiển Giao Thông</h1>
     </div>
@@ -318,6 +320,12 @@ let soLanDo = 0;
             document.getElementById("tabBtnVideo").classList.add("active");
         }
     }
+    function doiTheme() {
+    document.body.classList.toggle('dark');
+    const btn = document.getElementById('themeToggleBtn');
+    const dangToi = document.body.classList.contains('dark');
+    btn.innerText = dangToi ? '☀️' : '🌙';
+}
     function capNhatGiaoDien() {
         const lRed = document.getElementById("lightRed");
         const lYel = document.getElementById("lightYellow");
@@ -380,8 +388,7 @@ document.getElementById("valMatDoTB").innerHTML = `${trungBinh} <span class="car
         }
 
         valCount.innerText = `${soGiayDemNguoc}s`;
-        valCount.style.color = "#0f172a";
-
+        valCount.style.color = document.body.classList.contains('dark') ? "#f1f5f9" : "#0f172a";
         if (phaHienTai === "XANH") {
             lGrn.className = "light green active";
             lblState.innerText = "ĐANG ĐÈN XANH";
@@ -490,6 +497,42 @@ document.getElementById("valMatDoTB").innerHTML = `${trungBinh} <span class="car
 
     docDuLieuBlynk();
     thuKetNoiVideo();
+    body.dark {
+    background-color: #0f172a;
+    background-image: radial-gradient(circle, #1e293b 1px, transparent 1px);
+    color: #f1f5f9;
+}
+body.dark .dashboard {
+    background-color: #1e293b;
+    border-color: #334155;
+}
+body.dark .traffic-box,
+body.dark .card,
+body.dark .video-card {
+    background-color: #0f172a;
+    border-color: #334155;
+}
+body.dark .card-title,
+body.dark .countdown-label,
+body.dark .footer,
+body.dark #videoOfflineMsg {
+    color: #94a3b8;
+}
+body.dark .tab-bar {
+    background: #0f172a;
+}
+body.dark .tab-btn {
+    color: #94a3b8;
+}
+body.dark .tab-btn.active {
+    background: #1e293b;
+    color: #38bdf8;
+}
+body.dark #themeToggleBtn {
+    background: #334155;
+    border-color: #475569;
+    color: #f1f5f9;
+}
 </script>
 
 </body>
