@@ -182,7 +182,7 @@
     flex-direction: column;
     height: 100%;
 }
-        #videoFeed {
+        #videoCanvas {
             width: 100%;
             border-radius: 10px;
             margin-top: 8px;
@@ -318,7 +318,7 @@ body.dark #themeToggleBtn {
     <div class="card-title">Mật Độ Trung Bình</div>
     <div class="card-val" id="valMatDoTB">-- <span class="card-unit">xe</span></div>
 </div>
-                <img id="videoFeed" style="display:none;">
+                <canvas id="videoCanvas" style="display:none;"></canvas>
                 <div id="videoOfflineMsg">Video hiện không khả dụng (script Python chưa chạy)</div>
             </div>
             <div class="footer" style="margin-top: 16px;">Luồng video xử lý nhận diện AI theo thời gian thực</div>
@@ -515,23 +515,27 @@ body.dark #themeToggleBtn {
         }
     }
 
+    const canvasVideo = document.getElementById("videoCanvas");
+    const ctxVideo = canvasVideo.getContext("2d");
+
     function capNhatAnhVideo() {
-    const img = document.getElementById("videoFeed");
-    const offlineMsg = document.getElementById("videoOfflineMsg");
+        const offlineMsg = document.getElementById("videoOfflineMsg");
+        const anhTai = new Image();
 
-    const anhTai = new Image();
-    anhTai.onload = function () {
-        img.src = anhTai.src;
-        img.style.display = "block";
-        offlineMsg.style.display = "none";
-    };
-    anhTai.onerror = function () {
-        img.style.display = "none";
-        offlineMsg.style.display = "flex";
-    };
+        anhTai.onload = function () {
+            canvasVideo.width = anhTai.width;
+            canvasVideo.height = anhTai.height;
+            ctxVideo.drawImage(anhTai, 0, 0);
+            canvasVideo.style.display = "block";
+            offlineMsg.style.display = "none";
+        };
+        anhTai.onerror = function () {
+            canvasVideo.style.display = "none";
+            offlineMsg.style.display = "flex";
+        };
 
-    anhTai.src = "http://127.0.0.1:5000/snapshot?t=" + Date.now();
-}
+        anhTai.src = "http://127.0.0.1:5000/snapshot?t=" + Date.now();
+    }
 
     setInterval(capNhatGiaoDien, 1000);
     setInterval(docDuLieuBlynk, 1000);
