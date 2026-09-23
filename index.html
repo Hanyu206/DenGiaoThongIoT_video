@@ -327,8 +327,7 @@ body.dark #themeToggleBtn {
 </div>
 
 <script>
-    const TOKEN = "hvB5c9asX26FPTdPBU2de2YlcM1S3TbF";
-    const BASE_URL = "https://sgp1.blynk.cloud/external/api";
+    const PROXY_URL = "http://127.0.0.1:5000";
 
     let thoiGianXanhCaiDat = 8;
     let isPriority = false;
@@ -452,7 +451,7 @@ body.dark #themeToggleBtn {
 
     async function docDuLieuBlynk() {
         try {
-            const resStatus = await fetch(`${BASE_URL}/isHardwareConnected?token=${TOKEN}`);
+            const resStatus = await fetch(`${PROXY_URL}/api/status`);
             if (resStatus.ok) {
                 const statusText = (await resStatus.text()).trim();
                 if (statusText === "true") {
@@ -460,7 +459,7 @@ body.dark #themeToggleBtn {
                 }
             }
 
-            const resV0 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0`);
+            const resV0 = await fetch(`${PROXY_URL}/api/get?pin=v0`);
             if (resV0.ok) {
                 const soXe = parseInt(await resV0.text());
                 if (!isNaN(soXe)) {
@@ -468,13 +467,13 @@ body.dark #themeToggleBtn {
                 }
             }
 
-            const resV1 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v1`);
+            const resV1 = await fetch(`${PROXY_URL}/api/get?pin=v1`);
             if (resV1.ok) {
                 thoiGianXanhCaiDat = parseInt(await resV1.text());
                 document.getElementById("valGreenTime").innerHTML = `${thoiGianXanhCaiDat} <span class="card-unit">s</span>`;
             }
 
-            const resV2 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v2`);
+            const resV2 = await fetch(`${PROXY_URL}/api/get?pin=v2`);
             if (resV2.ok) {
                 const prio = await resV2.text();
                 const badge = document.getElementById("badgePriority");
@@ -491,8 +490,8 @@ body.dark #themeToggleBtn {
                 }
             }
 
-            const resV3 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v3`);
-            const resV4 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v4`);
+            const resV3 = await fetch(`${PROXY_URL}/api/get?pin=v3`);
+            const resV4 = await fetch(`${PROXY_URL}/api/get?pin=v4`);
             if (resV3.ok && resV4.ok) {
                 phaHienTai = (await resV3.text()).trim();
                 soGiayDemNguoc = parseInt(await resV4.text());
@@ -508,7 +507,7 @@ body.dark #themeToggleBtn {
             return;
         }
         try {
-            await fetch(`${BASE_URL}/update?token=${TOKEN}&v2=${val}`);
+            await fetch(`${PROXY_URL}/api/update?pin=v2&value=${val}`);
             docDuLieuBlynk();
         } catch (e) {
             alert("Lỗi gửi lệnh!");
@@ -534,7 +533,7 @@ body.dark #themeToggleBtn {
             offlineMsg.style.display = "flex";
         };
 
-        anhTai.src = "http://127.0.0.1:5000/snapshot?t=" + Date.now();
+        anhTai.src = `${PROXY_URL}/snapshot?t=` + Date.now();
     }
 
     setInterval(capNhatGiaoDien, 1000);
