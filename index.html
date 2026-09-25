@@ -409,7 +409,7 @@ body.dark #themeToggleBtn {
 
         tongSoXe += soXeMoiNhat;
         soLanDo++;
-        const trungBinh = (tongSoXe / soLanDo).toFixed(1);
+        const trungBinh = Math.round(tongSoXe / soLanDo);;
         document.getElementById("valMatDoTB").innerHTML = `${trungBinh} <span class="card-unit">xe</span>`;
 
         const densityEl = document.getElementById("valDensity");
