@@ -255,7 +255,7 @@
         <!-- =================== CỘT LÀN A =================== -->
         <div class="page active" id="pageLaneA">
             <div class="lane-header">
-                <span class="lane-title">🚦 LÀN A (Tuyến Chính)</span>
+                <span class="lane-title">LÀN A (Tuyến Chính)</span>
             </div>
 
             <div class="traffic-box">
@@ -291,14 +291,14 @@
                 </div>
             </div>
 
-            <button class="btn btn-priority" onclick="setPriority(1)">BẬT ƯU TIÊN LÀN A (CẤP CỨU)</button>
-            <button class="btn btn-auto" onclick="setPriority(0)">TỰ ĐỘNG THÍCH ỨNG</button>
+            <button class="btn btn-priority" onclick="setPriority('A', 1)">BẬT ƯU TIÊN LÀN A (CẤP CỨU)</button>
+            <button class="btn btn-auto" onclick="setPriority('A', 0)">TỰ ĐỘNG THÍCH ỨNG</button>
         </div>
 
         <!-- =================== CỘT LÀN B =================== -->
         <div class="page" id="pageLaneB">
             <div class="lane-header">
-                <span class="lane-title">🚦 LÀN B (Tuyến Cắt)</span>
+                <span class="lane-title">LÀN B (Tuyến Cắt)</span>
             </div>
 
             <div class="traffic-box">
@@ -327,16 +327,15 @@
                     <div class="card-val" id="valDensityB" style="font-size: 1.1rem; color: #4ade80; padding-top: 4px;">--</div>
                 </div>
                 <div class="card">
-                    <div class="card-title">Trạng Thái Làn</div>
+                    <div class="card-title">Chế Độ Hoạt Động</div>
                     <div style="margin-top: 4px;">
-                        <span id="badgeStateB" class="badge badge-auto">ĐANG KẾT NỐI...</span>
+                        <span id="badgePriorityB" class="badge badge-auto">ĐANG KẾT NỐI...</span>
                     </div>
                 </div>
             </div>
 
-            <div class="card" style="margin-bottom: 10px; text-align: left; font-size: 0.85rem; line-height: 1.5; color: #64748b;">
-                <strong>💡 Cơ chế vận hành:</strong> Làn B phối hợp chéo nhịp với Làn A. Khi Làn A xanh/vàng thì Làn B giữ đèn đỏ và ngược lại.
-            </div>
+            <button class="btn btn-priority" onclick="setPriority('B', 1)">BẬT ƯU TIÊN LÀN B (CẤP CỨU)</button>
+            <button class="btn btn-auto" onclick="setPriority('B', 0)">TỰ ĐỘNG THÍCH ỨNG</button>
         </div>
     </div>
 
@@ -360,6 +359,9 @@
     let phaB = "DO";
     let demNguocB = 8;
     let soXeB = 0;
+
+    // Chế độ ưu tiên đang kích hoạt: "NONE", "A", hoặc "B"
+    let currentPriorityLane = "NONE";
 
     function chuyenTab(tab) {
         document.getElementById("pageLaneA").classList.remove("active");
@@ -403,7 +405,7 @@
         const lGrnB = document.getElementById("lightGreenB");
         const lblStateB = document.getElementById("lblTrafficStateB");
         const valCountB = document.getElementById("valCountdownB");
-        const badgeB = document.getElementById("badgeStateB");
+        const badgeB = document.getElementById("badgePriorityB");
 
         const textColor = document.body.classList.contains('dark') ? "#f1f5f9" : "#0f172a";
 
@@ -436,82 +438,111 @@
         lYelB.className = "light yellow";
         lGrnB.className = "light green";
 
-        // --- CẬP NHẬT LÀN A ---
+        // --- CẬP NHẬT THỐNG KÊ SỐ XE & MẬT ĐỘ ---
         document.getElementById("valSoXeA").innerHTML = `${soXeA} <span class="card-unit">xe</span>`;
         const densityA = danhGiaMatDo(soXeA);
         const densityElA = document.getElementById("valDensityA");
         densityElA.innerText = densityA.text;
         densityElA.style.color = densityA.color;
 
-        if (phaA === "UU TIEN") {
-            lGrnA.className = "light green active";
-            lblStateA.innerText = "LÀN ĐƯỢC ƯU TIÊN";
-            lblStateA.style.color = "#16a34a";
-            valCountA.innerText = "CẤP CỨU";
-            valCountA.style.color = "#ef4444";
-        } else {
-            valCountA.innerText = `${demNguocA}s`;
-            valCountA.style.color = textColor;
-            if (phaA === "XANH") {
-                lGrnA.className = "light green active";
-                lblStateA.innerText = "ĐANG ĐÈN XANH";
-                lblStateA.style.color = "#16a34a";
-            } else if (phaA === "VANG") {
-                lYelA.className = "light yellow active";
-                lblStateA.innerText = "ĐANG ĐÈN VÀNG";
-                lblStateA.style.color = "#eab308";
-            } else if (phaA === "DO") {
-                lRedA.className = "light red active";
-                lblStateA.innerText = "ĐANG ĐÈN ĐỎ";
-                lblStateA.style.color = "#ef4444";
-            }
-        }
-
-        // --- SUY LUẬN / ĐỒNG BỘ TRẠNG THÁI LÀN B THEO LÀN A ---
-        // Nếu làn A đang ưu tiên, Làn B bắt buộc dừng (Đỏ)
-        if (phaA === "UU TIEN") {
-            phaB = "DO";
-            demNguocB = "--";
-            lRedB.className = "light red active";
-            lblStateB.innerText = "DỪNG CHỜ CẤP CỨU";
-            lblStateB.style.color = "#ef4444";
-            valCountB.innerText = "CHỜ";
-            badgeB.innerText = "NHƯỜNG ĐƯỜNG";
-            badgeB.className = "badge badge-priority";
-        } else {
-            // Khi làn A Xanh hoặc Vàng -> Làn B Đỏ
-            if (phaA === "XANH" || phaA === "VANG") {
-                phaB = "DO";
-                demNguocB = demNguocA;
-                lRedB.className = "light red active";
-                lblStateB.innerText = "ĐANG ĐÈN ĐỎ";
-                lblStateB.style.color = "#ef4444";
-            } 
-            // Khi làn A Đỏ -> Làn B Xanh
-            else if (phaA === "DO") {
-                phaB = "XANH";
-                demNguocB = demNguocA;
-                lGrnB.className = "light green active";
-                lblStateB.innerText = "ĐANG ĐÈN XANH";
-                lblStateB.style.color = "#16a34a";
-            }
-            valCountB.innerText = typeof demNguocB === "number" ? `${demNguocB}s` : demNguocB;
-            valCountB.style.color = textColor;
-            badgeB.innerText = "BÌNH THƯỜNG";
-            badgeB.className = "badge badge-auto";
-        }
-
-        // --- CẬP NHẬT THỐNG KÊ LÀN B ---
         document.getElementById("valSoXeB").innerHTML = `${soXeB} <span class="card-unit">xe</span>`;
         const densityB = danhGiaMatDo(soXeB);
         const densityElB = document.getElementById("valDensityB");
         densityElB.innerText = densityB.text;
         densityElB.style.color = densityB.color;
+
+        // --- TRƯỜNG HỢP 1: ƯU TIÊN LÀN A ---
+        if (currentPriorityLane === "A" || phaA === "UU TIEN") {
+            // Làn A: Xanh toàn bộ
+            lGrnA.className = "light green active";
+            lblStateA.innerText = "LÀN ĐƯỢC ƯU TIÊN";
+            lblStateA.style.color = "#16a34a";
+            valCountA.innerText = "CẤP CỨU";
+            valCountA.style.color = "#ef4444";
+            badgeA.innerText = "🚨 KHẨN CẤP";
+            badgeA.className = "badge badge-priority";
+
+            // Làn B: Đỏ toàn bộ
+            lRedB.className = "light red active";
+            lblStateB.innerText = "DỪNG CHỜ CẤP CỨU";
+            lblStateB.style.color = "#ef4444";
+            valCountB.innerText = "CHỜ";
+            valCountB.style.color = "#ef4444";
+            badgeB.innerText = "NHƯỜNG ĐƯỜNG";
+            badgeB.className = "badge badge-priority";
+            return;
+        }
+
+        // --- TRƯỜNG HỢP 2: ƯU TIÊN LÀN B ---
+        if (currentPriorityLane === "B") {
+            // Làn B: Xanh toàn bộ
+            lGrnB.className = "light green active";
+            lblStateB.innerText = "LÀN ĐƯỢC ƯU TIÊN";
+            lblStateB.style.color = "#16a34a";
+            valCountB.innerText = "CẤP CỨU";
+            valCountB.style.color = "#ef4444";
+            badgeB.innerText = "🚨 KHẨN CẤP";
+            badgeB.className = "badge badge-priority";
+
+            // Làn A: Đỏ toàn bộ
+            lRedA.className = "light red active";
+            lblStateA.innerText = "DỪNG CHỜ CẤP CỨU";
+            lblStateA.style.color = "#ef4444";
+            valCountA.innerText = "CHỜ";
+            valCountA.style.color = "#ef4444";
+            badgeA.innerText = "NHƯỜNG ĐƯỜNG";
+            badgeA.className = "badge badge-priority";
+            return;
+        }
+
+        // --- TRƯỜNG HỢP 3: CHẾ ĐỘ TỰ ĐỘNG THÍCH ỨNG ---
+        badgeA.innerText = "TỰ ĐỘNG THÍCH ỨNG";
+        badgeA.className = "badge badge-auto";
+        badgeB.innerText = "TỰ ĐỘNG THÍCH ỨNG";
+        badgeB.className = "badge badge-auto";
+
+        valCountA.innerText = `${demNguocA}s`;
+        valCountA.style.color = textColor;
+
+        // Trạng thái đèn Làn A
+        if (phaA === "XANH") {
+            lGrnA.className = "light green active";
+            lblStateA.innerText = "ĐANG ĐÈN XANH";
+            lblStateA.style.color = "#16a34a";
+
+            // Làn B đối ứng: Đỏ
+            lRedB.className = "light red active";
+            lblStateB.innerText = "ĐANG ĐÈN ĐỎ";
+            lblStateB.style.color = "#ef4444";
+            valCountB.innerText = `${demNguocA}s`;
+            valCountB.style.color = textColor;
+        } else if (phaA === "VANG") {
+            lYelA.className = "light yellow active";
+            lblStateA.innerText = "ĐANG ĐÈN VÀNG";
+            lblStateA.style.color = "#eab308";
+
+            // Làn B đối ứng: Đỏ
+            lRedB.className = "light red active";
+            lblStateB.innerText = "ĐANG ĐÈN ĐỎ";
+            lblStateB.style.color = "#ef4444";
+            valCountB.innerText = `${demNguocA}s`;
+            valCountB.style.color = textColor;
+        } else if (phaA === "DO") {
+            lRedA.className = "light red active";
+            lblStateA.innerText = "ĐANG ĐÈN ĐỎ";
+            lblStateA.style.color = "#ef4444";
+
+            // Làn B đối ứng: Xanh
+            lGrnB.className = "light green active";
+            lblStateB.innerText = "ĐANG ĐÈN XANH";
+            lblStateB.style.color = "#16a34a";
+            valCountB.innerText = `${demNguocA}s`;
+            valCountB.style.color = textColor;
+        }
     }
 
     async function docDuLieuBlynk() {
         try {
-            // Kiểm tra trạng thái ESP32 kết nối
             const resStatus = await fetch(`${BASE_URL}/isHardwareConnected?token=${TOKEN}`);
             if (resStatus.ok) {
                 const statusText = (await resStatus.text()).trim();
@@ -527,59 +558,59 @@
                 if (!isNaN(count)) soXeA = count;
             }
 
-            // V1: Thời gian xanh cài đặt Làn A
+            // V1: Thời gian xanh Làn A
             const resV1 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v1`);
             if (resV1.ok) {
                 thoiGianXanhA = parseInt(await resV1.text());
                 document.getElementById("valGreenTimeA").innerHTML = `${thoiGianXanhA} <span class="card-unit">s</span>`;
-                // Mặc định gán thời gian xanh làn B tương đương hoặc đọc qua V pin khác
                 document.getElementById("valGreenTimeB").innerHTML = `${thoiGianXanhA} <span class="card-unit">s</span>`;
             }
 
-            // V2: Chế độ Ưu tiên
+            // V2: Trạng thái ưu tiên từ Cloud
             const resV2 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v2`);
             if (resV2.ok) {
-                const prio = await resV2.text();
-                const badgeA = document.getElementById("badgePriorityA");
-                if (isConnected) {
-                    if (prio === "1") {
-                        badgeA.innerText = "🚨 KHẨN CẤP";
-                        badgeA.className = "badge badge-priority";
-                    } else {
-                        badgeA.innerText = "TỰ ĐỘNG THÍCH ỨNG";
-                        badgeA.className = "badge badge-auto";
-                    }
+                const prio = (await resV2.text()).trim();
+                if (prio === "1") {
+                    currentPriorityLane = "A";
+                } else if (prio === "2") {
+                    currentPriorityLane = "B";
+                } else {
+                    currentPriorityLane = "NONE";
                 }
             }
 
-            // V3: Pha Làn A, V4: Số giây đếm ngược Làn A
+            // V3: Pha Làn A, V4: Đếm ngược Làn A
             const resV3 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v3`);
             const resV4 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v4`);
             if (resV3.ok && resV4.ok) {
                 phaA = (await resV3.text()).trim();
                 demNguocA = parseInt(await resV4.text());
             }
-
-            // (Tùy chọn) Nếu bạn gán V5 cho số xe Làn B:
-            /*
-            const resV5 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v5`);
-            if (resV5.ok) {
-                const countB = parseInt(await resV5.text());
-                if (!isNaN(countB)) soXeB = countB;
-            }
-            */
         } catch (e) {
             console.error("Lỗi đồng bộ Blynk:", e);
         }
     }
 
-    async function setPriority(val) {
+    async function setPriority(lane, val) {
         if (!isConnected) {
             alert("Hệ thống đang Offline, không thể gửi lệnh!");
             return;
         }
         try {
-            await fetch(`${BASE_URL}/update?token=${TOKEN}&v2=${val}`);
+            // Giá trị gửi lên V2:
+            // 0: Bình thường (Tự động thích ứng)
+            // 1: Ưu tiên Làn A
+            // 2: Ưu tiên Làn B
+            let sendVal = 0;
+            if (val === 1) {
+                sendVal = (lane === 'A') ? 1 : 2;
+                currentPriorityLane = lane;
+            } else {
+                sendVal = 0;
+                currentPriorityLane = "NONE";
+            }
+
+            await fetch(`${BASE_URL}/update?token=${TOKEN}&v2=${sendVal}`);
             docDuLieuBlynk();
         } catch (e) {
             alert("Lỗi gửi lệnh!");
