@@ -37,7 +37,6 @@
             letter-spacing: 0.5px;
         }
 
-        /* Tab trên di động */
         .tab-bar {
             display: flex;
             background: #f1f5f9;
@@ -74,7 +73,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Khung hiển thị đèn giao thông */
         .lane-header {
             display: flex;
             justify-content: space-between;
@@ -187,7 +185,6 @@
         .btn-auto:hover { background-color: #0369a1; }
         .footer { text-align: center; font-size: 0.75rem; color: #94a3b8; margin-top: 15px; }
 
-        /* Giao diện 2 cột song song trên màn hình rộng */
         @media (min-width: 860px) {
             .tab-bar { display: none; }
             .content-wrap {
@@ -204,37 +201,21 @@
             }
         }
 
-        /* Dark mode */
         body.dark {
             background-color: #0f172a;
             background-image: radial-gradient(circle, #1e293b 1px, transparent 1px);
             color: #f1f5f9;
         }
-        body.dark .dashboard {
-            background-color: #1e293b;
-            border-color: #334155;
-        }
+        body.dark .dashboard { background-color: #1e293b; border-color: #334155; }
         body.dark .traffic-box,
-        body.dark .card {
-            background-color: #0f172a;
-            border-color: #334155;
-        }
+        body.dark .card { background-color: #0f172a; border-color: #334155; }
         body.dark .card-title,
         body.dark .countdown-label,
-        body.dark .footer {
-            color: #94a3b8;
-        }
+        body.dark .footer { color: #94a3b8; }
         body.dark .tab-bar { background: #0f172a; }
         body.dark .tab-btn { color: #94a3b8; }
-        body.dark .tab-btn.active {
-            background: #1e293b;
-            color: #38bdf8;
-        }
-        body.dark #themeToggleBtn {
-            background: #334155;
-            border-color: #475569;
-            color: #f1f5f9;
-        }
+        body.dark .tab-btn.active { background: #1e293b; color: #38bdf8; }
+        body.dark #themeToggleBtn { background: #334155; border-color: #475569; color: #f1f5f9; }
     </style>
 </head>
 <body>
@@ -245,14 +226,13 @@
         <h1>Trung Tâm Giám Sát & Điều Khiển Giao Thông</h1>
     </div>
 
-    <!-- Thanh chuyển tab trên mobile -->
     <div class="tab-bar">
         <button class="tab-btn active" id="tabBtnA" onclick="chuyenTab('laneA')">LÀN A</button>
         <button class="tab-btn" id="tabBtnB" onclick="chuyenTab('laneB')">LÀN B</button>
     </div>
 
     <div class="content-wrap">
-        <!-- =================== CỘT LÀN A =================== -->
+        <!-- =================== LÀN A =================== -->
         <div class="page active" id="pageLaneA">
             <div class="lane-header">
                 <span class="lane-title">LÀN A (Tuyến Chính)</span>
@@ -295,7 +275,7 @@
             <button class="btn btn-auto" onclick="setPriority('A', 0)">TỰ ĐỘNG THÍCH ỨNG</button>
         </div>
 
-        <!-- =================== CỘT LÀN B =================== -->
+        <!-- =================== LÀN B =================== -->
         <div class="page" id="pageLaneB">
             <div class="lane-header">
                 <span class="lane-title">LÀN B (Tuyến Cắt)</span>
@@ -345,23 +325,27 @@
 <script>
     const TOKEN = "C0V9wGBhWofk4QDqrgNuXXhOWCz-gxwI";
     const BASE_URL = "https://sgp1.blynk.cloud/external/api";
+    const THOI_GIAN_VANG = 3;   // phải khớp với THOI_GIAN_VANG trong firmware ESP32
 
-    // Trạng thái Làn A
-    let thoiGianXanhA = 8;
-    let phaA = "XANH";
-    let demNguocA = 8;
-    let soXeA = 0;
+    /*
+      Ánh xạ Virtual Pin (khớp firmware + script Python):
+        V0 = số xe A        V5 = số xe B
+        V1 = thời gian xanh A   V6 = thời gian xanh B
+        V2 = cờ ưu tiên (0 = không, 1 = A, 2 = B)
+        V3 = trạng thái A   V7 = trạng thái B   (XANH / VANG / DO / UU TIEN)
+        V4 = đếm lùi A      V8 = đếm lùi B
+    */
+
     let isConnected = false;
     let lastSeenTime = 0;
 
-    // Trạng thái Làn B
-    let thoiGianXanhB = 8;
-    let phaB = "DO";
-    let demNguocB = 8;
-    let soXeB = 0;
+    let soXeA = 0, soXeB = 0;
+    let thoiGianXanhA = null, thoiGianXanhB = null;
+    let phaA = "DO", phaB = "DO";
+    let demNguocA = 0, demNguocB = 0;
+    let currentPriorityLane = "NONE";   // "NONE" | "A" | "B" (giá trị đang có trên V2)
 
-    // Chế độ ưu tiên đang kích hoạt: "NONE", "A", hoặc "B"
-    let currentPriorityLane = "NONE";
+    const PHA_HOP_LE = ["XANH", "VANG", "DO", "UU TIEN"];
 
     function chuyenTab(tab) {
         document.getElementById("pageLaneA").classList.remove("active");
@@ -392,153 +376,97 @@
         return { text: "THẤP (THÔNG THOÁNG)", color: "#16a34a" };
     }
 
-    function capNhatGiaoDien() {
-        const lRedA = document.getElementById("lightRedA");
-        const lYelA = document.getElementById("lightYellowA");
-        const lGrnA = document.getElementById("lightGreenA");
-        const lblStateA = document.getElementById("lblTrafficStateA");
-        const valCountA = document.getElementById("valCountdownA");
-        const badgeA = document.getElementById("badgePriorityA");
+    // Tính trạng thái hiển thị của 1 làn
+    // pha/giay: dữ liệu của chính làn đó; phaKia/giayKia: dữ liệu của làn đối diện
+    function tinhTrangThaiLan(pha, giay, phaKia, giayKia, dangUuTien, kiaDangUuTien) {
+        if (dangUuTien) {
+            return { den: "green", nhan: "LÀN ĐƯỢC ƯU TIÊN", dem: "CẤP CỨU", mauDem: "#ef4444", mauNhan: "#16a34a" };
+        }
+        if (kiaDangUuTien) {
+            return { den: "red", nhan: "DỪNG CHỜ CẤP CỨU", dem: "CHỜ", mauDem: "#ef4444", mauNhan: "#ef4444" };
+        }
+        if (pha === "XANH") {
+            return { den: "green", nhan: "ĐANG ĐÈN XANH", dem: `${giay}s`, mauDem: null, mauNhan: "#16a34a" };
+        }
+        if (pha === "VANG") {
+            return { den: "yellow", nhan: "ĐANG ĐÈN VÀNG", dem: `${giay}s`, mauDem: null, mauNhan: "#eab308" };
+        }
+        // Đang đỏ: ESP32 chỉ ghi đếm lùi cho làn đang chạy, nên thời gian đỏ
+        // = thời gian còn lại (xanh + vàng) của làn đối diện
+        let demDo = "--";
+        if (phaKia === "XANH") demDo = `${giayKia + THOI_GIAN_VANG}s`;
+        else if (phaKia === "VANG") demDo = `${giayKia}s`;
+        return { den: "red", nhan: "ĐANG ĐÈN ĐỎ", dem: demDo, mauDem: null, mauNhan: "#ef4444" };
+    }
 
-        const lRedB = document.getElementById("lightRedB");
-        const lYelB = document.getElementById("lightYellowB");
-        const lGrnB = document.getElementById("lightGreenB");
-        const lblStateB = document.getElementById("lblTrafficStateB");
-        const valCountB = document.getElementById("valCountdownB");
-        const badgeB = document.getElementById("badgePriorityB");
-
+    function veLan(hau, tt, soXe, thoiGianXanh, dangYeuCauUuTien, nhuongDuong) {
         const textColor = document.body.classList.contains('dark') ? "#f1f5f9" : "#0f172a";
 
-        // Xử lý khi mất kết nối Blynk
+        ["red", "yellow", "green"].forEach(m => {
+            const id = "light" + m.charAt(0).toUpperCase() + m.slice(1) + hau;
+            document.getElementById(id).className = "light " + m + (tt.den === m ? " active" : "");
+        });
+
+        const lbl = document.getElementById("lblTrafficState" + hau);
+        lbl.innerText = tt.nhan;
+        lbl.style.color = tt.mauNhan;
+
+        const cnt = document.getElementById("valCountdown" + hau);
+        cnt.innerText = tt.dem;
+        cnt.style.color = tt.mauDem || textColor;
+
+        document.getElementById("valSoXe" + hau).innerHTML = `${soXe} <span class="card-unit">xe</span>`;
+        const d = danhGiaMatDo(soXe);
+        const dEl = document.getElementById("valDensity" + hau);
+        dEl.innerText = d.text;
+        dEl.style.color = d.color;
+
+        document.getElementById("valGreenTime" + hau).innerHTML =
+            `${thoiGianXanh === null ? "--" : thoiGianXanh} <span class="card-unit">s</span>`;
+
+        const badge = document.getElementById("badgePriority" + hau);
+        if (dangYeuCauUuTien) {
+            badge.innerText = "🚨 KHẨN CẤP";
+            badge.className = "badge badge-priority";
+        } else if (nhuongDuong) {
+            badge.innerText = "NHƯỜNG ĐƯỜNG";
+            badge.className = "badge badge-priority";
+        } else {
+            badge.innerText = "TỰ ĐỘNG THÍCH ỨNG";
+            badge.className = "badge badge-auto";
+        }
+    }
+
+    function capNhatGiaoDien() {
+        // Mất kết nối Blynk / ESP32
         if (Date.now() - lastSeenTime > 2500) {
             isConnected = false;
-            [lRedA, lYelA, lGrnA, lRedB, lYelB, lGrnB].forEach(el => el.className = el.className.split(' ')[0] + ' ' + el.className.split(' ')[1]);
-
-            lblStateA.innerText = "MẤT KẾT NỐI";
-            lblStateA.style.color = "#ef4444";
-            valCountA.innerText = "--";
-            badgeA.innerText = "OFFLINE";
-            badgeA.className = "badge badge-offline";
-
-            lblStateB.innerText = "MẤT KẾT NỐI";
-            lblStateB.style.color = "#ef4444";
-            valCountB.innerText = "--";
-            badgeB.innerText = "OFFLINE";
-            badgeB.className = "badge badge-offline";
+            ["A", "B"].forEach(h => {
+                ["Red", "Yellow", "Green"].forEach(m => {
+                    document.getElementById("light" + m + h).className = "light " + m.toLowerCase();
+                });
+                const lbl = document.getElementById("lblTrafficState" + h);
+                lbl.innerText = "MẤT KẾT NỐI";
+                lbl.style.color = "#ef4444";
+                document.getElementById("valCountdown" + h).innerText = "--";
+                const badge = document.getElementById("badgePriority" + h);
+                badge.innerText = "OFFLINE";
+                badge.className = "badge badge-offline";
+            });
             return;
         }
-
         isConnected = true;
 
-        // Reset class đèn
-        lRedA.className = "light red";
-        lYelA.className = "light yellow";
-        lGrnA.className = "light green";
-        lRedB.className = "light red";
-        lYelB.className = "light yellow";
-        lGrnB.className = "light green";
+        // Đèn/đếm lùi theo trạng thái THỰC do ESP32 báo về
+        const uuTienA = (phaA === "UU TIEN");
+        const uuTienB = (phaB === "UU TIEN");
 
-        // --- CẬP NHẬT THỐNG KÊ SỐ XE & MẬT ĐỘ ---
-        document.getElementById("valSoXeA").innerHTML = `${soXeA} <span class="card-unit">xe</span>`;
-        const densityA = danhGiaMatDo(soXeA);
-        const densityElA = document.getElementById("valDensityA");
-        densityElA.innerText = densityA.text;
-        densityElA.style.color = densityA.color;
+        const ttA = tinhTrangThaiLan(phaA, demNguocA, phaB, demNguocB, uuTienA, uuTienB);
+        const ttB = tinhTrangThaiLan(phaB, demNguocB, phaA, demNguocA, uuTienB, uuTienA);
 
-        document.getElementById("valSoXeB").innerHTML = `${soXeB} <span class="card-unit">xe</span>`;
-        const densityB = danhGiaMatDo(soXeB);
-        const densityElB = document.getElementById("valDensityB");
-        densityElB.innerText = densityB.text;
-        densityElB.style.color = densityB.color;
-
-        // --- TRƯỜNG HỢP 1: ƯU TIÊN LÀN A ---
-        if (currentPriorityLane === "A" || phaA === "UU TIEN") {
-            // Làn A: Xanh toàn bộ
-            lGrnA.className = "light green active";
-            lblStateA.innerText = "LÀN ĐƯỢC ƯU TIÊN";
-            lblStateA.style.color = "#16a34a";
-            valCountA.innerText = "CẤP CỨU";
-            valCountA.style.color = "#ef4444";
-            badgeA.innerText = "🚨 KHẨN CẤP";
-            badgeA.className = "badge badge-priority";
-
-            // Làn B: Đỏ toàn bộ
-            lRedB.className = "light red active";
-            lblStateB.innerText = "DỪNG CHỜ CẤP CỨU";
-            lblStateB.style.color = "#ef4444";
-            valCountB.innerText = "CHỜ";
-            valCountB.style.color = "#ef4444";
-            badgeB.innerText = "NHƯỜNG ĐƯỜNG";
-            badgeB.className = "badge badge-priority";
-            return;
-        }
-
-        // --- TRƯỜNG HỢP 2: ƯU TIÊN LÀN B ---
-        if (currentPriorityLane === "B") {
-            // Làn B: Xanh toàn bộ
-            lGrnB.className = "light green active";
-            lblStateB.innerText = "LÀN ĐƯỢC ƯU TIÊN";
-            lblStateB.style.color = "#16a34a";
-            valCountB.innerText = "CẤP CỨU";
-            valCountB.style.color = "#ef4444";
-            badgeB.innerText = "🚨 KHẨN CẤP";
-            badgeB.className = "badge badge-priority";
-
-            // Làn A: Đỏ toàn bộ
-            lRedA.className = "light red active";
-            lblStateA.innerText = "DỪNG CHỜ CẤP CỨU";
-            lblStateA.style.color = "#ef4444";
-            valCountA.innerText = "CHỜ";
-            valCountA.style.color = "#ef4444";
-            badgeA.innerText = "NHƯỜNG ĐƯỜNG";
-            badgeA.className = "badge badge-priority";
-            return;
-        }
-
-        // --- TRƯỜNG HỢP 3: CHẾ ĐỘ TỰ ĐỘNG THÍCH ỨNG ---
-        badgeA.innerText = "TỰ ĐỘNG THÍCH ỨNG";
-        badgeA.className = "badge badge-auto";
-        badgeB.innerText = "TỰ ĐỘNG THÍCH ỨNG";
-        badgeB.className = "badge badge-auto";
-
-        valCountA.innerText = `${demNguocA}s`;
-        valCountA.style.color = textColor;
-
-        // Trạng thái đèn Làn A
-        if (phaA === "XANH") {
-            lGrnA.className = "light green active";
-            lblStateA.innerText = "ĐANG ĐÈN XANH";
-            lblStateA.style.color = "#16a34a";
-
-            // Làn B đối ứng: Đỏ
-            lRedB.className = "light red active";
-            lblStateB.innerText = "ĐANG ĐÈN ĐỎ";
-            lblStateB.style.color = "#ef4444";
-            valCountB.innerText = `${demNguocA}s`;
-            valCountB.style.color = textColor;
-        } else if (phaA === "VANG") {
-            lYelA.className = "light yellow active";
-            lblStateA.innerText = "ĐANG ĐÈN VÀNG";
-            lblStateA.style.color = "#eab308";
-
-            // Làn B đối ứng: Đỏ
-            lRedB.className = "light red active";
-            lblStateB.innerText = "ĐANG ĐÈN ĐỎ";
-            lblStateB.style.color = "#ef4444";
-            valCountB.innerText = `${demNguocA}s`;
-            valCountB.style.color = textColor;
-        } else if (phaA === "DO") {
-            lRedA.className = "light red active";
-            lblStateA.innerText = "ĐANG ĐÈN ĐỎ";
-            lblStateA.style.color = "#ef4444";
-
-            // Làn B đối ứng: Xanh
-            lGrnB.className = "light green active";
-            lblStateB.innerText = "ĐANG ĐÈN XANH";
-            lblStateB.style.color = "#16a34a";
-            valCountB.innerText = `${demNguocA}s`;
-            valCountB.style.color = textColor;
-        }
+        // Huy hiệu theo cờ V2 (lệnh đang yêu cầu)
+        veLan("A", ttA, soXeA, thoiGianXanhA, currentPriorityLane === "A", currentPriorityLane === "B");
+        veLan("B", ttB, soXeB, thoiGianXanhB, currentPriorityLane === "B", currentPriorityLane === "A");
     }
 
     async function docDuLieuBlynk() {
@@ -551,41 +479,35 @@
                 }
             }
 
-            // V0: Số lượng xe Làn A
-            const resV0 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0`);
-            if (resV0.ok) {
-                const count = parseInt(await resV0.text());
-                if (!isNaN(count)) soXeA = count;
-            }
+            // Đọc gộp V0..V8 trong 1 request (Blynk trả về JSON)
+            const res = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0&v1&v2&v3&v4&v5&v6&v7&v8`);
+            if (!res.ok) return;
+            const d = await res.json();
+            const lay = k => (d[k] !== undefined ? d[k] : d[k.toUpperCase()]);
+            const toInt = (v, macDinh) => {
+                const n = parseInt(v);
+                return isNaN(n) ? macDinh : n;
+            };
 
-            // V1: Thời gian xanh Làn A
-            const resV1 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v1`);
-            if (resV1.ok) {
-                thoiGianXanhA = parseInt(await resV1.text());
-                document.getElementById("valGreenTimeA").innerHTML = `${thoiGianXanhA} <span class="card-unit">s</span>`;
-                document.getElementById("valGreenTimeB").innerHTML = `${thoiGianXanhA} <span class="card-unit">s</span>`;
-            }
+            soXeA = toInt(lay("v0"), soXeA);
+            soXeB = toInt(lay("v5"), soXeB);
 
-            // V2: Trạng thái ưu tiên từ Cloud
-            const resV2 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v2`);
-            if (resV2.ok) {
-                const prio = (await resV2.text()).trim();
-                if (prio === "1") {
-                    currentPriorityLane = "A";
-                } else if (prio === "2") {
-                    currentPriorityLane = "B";
-                } else {
-                    currentPriorityLane = "NONE";
-                }
-            }
+            const xanhA = toInt(lay("v1"), null);
+            const xanhB = toInt(lay("v6"), null);
+            if (xanhA !== null) thoiGianXanhA = xanhA;
+            if (xanhB !== null) thoiGianXanhB = xanhB;
 
-            // V3: Pha Làn A, V4: Đếm ngược Làn A
-            const resV3 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v3`);
-            const resV4 = await fetch(`${BASE_URL}/get?token=${TOKEN}&v4`);
-            if (resV3.ok && resV4.ok) {
-                phaA = (await resV3.text()).trim();
-                demNguocA = parseInt(await resV4.text());
-            }
+            const prio = String(lay("v2")).trim();
+            currentPriorityLane = (prio === "1") ? "A" : (prio === "2") ? "B" : "NONE";
+
+            // Bỏ qua giá trị lạ (vd. "ACK" mà firmware ghi tạm lên V3 khi nhận lệnh ưu tiên)
+            const p3 = String(lay("v3")).trim();
+            const p7 = String(lay("v7")).trim();
+            if (PHA_HOP_LE.includes(p3)) phaA = p3;
+            if (PHA_HOP_LE.includes(p7)) phaB = p7;
+
+            demNguocA = toInt(lay("v4"), demNguocA);
+            demNguocB = toInt(lay("v8"), demNguocB);
         } catch (e) {
             console.error("Lỗi đồng bộ Blynk:", e);
         }
@@ -597,19 +519,14 @@
             return;
         }
         try {
-            // Giá trị gửi lên V2:
-            // 0: Bình thường (Tự động thích ứng)
-            // 1: Ưu tiên Làn A
-            // 2: Ưu tiên Làn B
+            // V2: 0 = tự động | 1 = ưu tiên A | 2 = ưu tiên B
             let sendVal = 0;
             if (val === 1) {
                 sendVal = (lane === 'A') ? 1 : 2;
                 currentPriorityLane = lane;
             } else {
-                sendVal = 0;
                 currentPriorityLane = "NONE";
             }
-
             await fetch(`${BASE_URL}/update?token=${TOKEN}&v2=${sendVal}`);
             docDuLieuBlynk();
         } catch (e) {
