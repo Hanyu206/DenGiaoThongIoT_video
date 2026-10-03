@@ -380,10 +380,10 @@
     // pha/giay: dữ liệu của chính làn đó; phaKia/giayKia: dữ liệu của làn đối diện
     function tinhTrangThaiLan(pha, giay, phaKia, giayKia, dangUuTien, kiaDangUuTien) {
         if (dangUuTien) {
-            return { den: "green", nhan: "LÀN ĐƯỢC ƯU TIÊN", dem: "CẤP CỨU", mauDem: "#ef4444", mauNhan: "#16a34a" };
+            return { den: "green", nhan: "LÀN ĐƯỢC ƯU TIÊN", dem: "ƯU TIÊN", mauDem: "#ef4444", mauNhan: "#16a34a" };
         }
         if (kiaDangUuTien) {
-            return { den: "red", nhan: "DỪNG CHỜ CẤP CỨU", dem: "CHỜ", mauDem: "#ef4444", mauNhan: "#ef4444" };
+            return { den: "red", nhan: "DỪNG CHỜ ƯU TIÊN", dem: "CHỜ", mauDem: "#ef4444", mauNhan: "#ef4444" };
         }
         if (pha === "XANH") {
             return { den: "green", nhan: "ĐANG ĐÈN XANH", dem: `${giay}s`, mauDem: null, mauNhan: "#16a34a" };
