@@ -227,15 +227,15 @@
     </div>
 
     <div class="tab-bar">
-        <button class="tab-btn active" id="tabBtnA" onclick="chuyenTab('laneA')">HƯỚNG A A</button>
-        <button class="tab-btn" id="tabBtnB" onclick="chuyenTab('laneB')">HƯỚNG B</button>
+        <button class="tab-btn active" id="tabBtnA" onclick="chuyenTab('laneA')">LÀN A</button>
+        <button class="tab-btn" id="tabBtnB" onclick="chuyenTab('laneB')">LÀN B</button>
     </div>
 
     <div class="content-wrap">
         <!-- =================== LÀN A =================== -->
         <div class="page active" id="pageLaneA">
             <div class="lane-header">
-                <span class="lane-title">Hướng A (BẮC - NAM)</span>
+                <span class="lane-title">LÀN A (BẮC - NAM)</span>
             </div>
 
             <div class="traffic-box">
@@ -271,14 +271,14 @@
                 </div>
             </div>
 
-            <button class="btn btn-priority" onclick="setPriority('A', 1)">BẬT ƯU TIÊN HƯỚNG A (CẤP CỨU)</button>
+            <button class="btn btn-priority" onclick="setPriority('A', 1)">BẬT ƯU TIÊN LÀN A (CẤP CỨU)</button>
             <button class="btn btn-auto" onclick="setPriority('A', 0)">TỰ ĐỘNG THÍCH ỨNG</button>
         </div>
 
         <!-- =================== LÀN B =================== -->
         <div class="page" id="pageLaneB">
             <div class="lane-header">
-                <span class="lane-title">HƯỚNG B (ĐÔNG - TÂY)</span>
+                <span class="lane-title">LÀN B (ĐÔNG - TÂY)</span>
             </div>
 
             <div class="traffic-box">
@@ -314,7 +314,7 @@
                 </div>
             </div>
 
-            <button class="btn btn-priority" onclick="setPriority('B', 1)">BẬT ƯU TIÊN HƯỚNG B (CẤP CỨU)</button>
+            <button class="btn btn-priority" onclick="setPriority('B', 1)">BẬT ƯU TIÊN LÀN B (CẤP CỨU)</button>
             <button class="btn btn-auto" onclick="setPriority('B', 0)">TỰ ĐỘNG THÍCH ỨNG</button>
         </div>
     </div>
@@ -323,8 +323,8 @@
 </div>
 
 <script>
-    const TOKEN = "C0V9wGBhWofk4QDqrgNuXXhOWCz-gxwI";
-    const BASE_URL = "https://sgp1.blynk.cloud/external/api";
+    // Trang KHÔNG chứa token Blynk. Mọi dữ liệu đi qua máy chủ Flask (ai/main.py) cùng địa chỉ với trang này.
+    const API = "/api";
     const THOI_GIAN_VANG = 3;   // phải khớp với THOI_GIAN_VANG trong firmware ESP32
 
     /*
@@ -338,6 +338,7 @@
 
     let isConnected = false;
     let lastSeenTime = 0;
+    let choPhepDieuKhien = false;       // máy chủ báo có đặt ADMIN_PASSWORD hay không
 
     let soXeA = 0, soXeB = 0;
     let thoiGianXanhA = null, thoiGianXanhB = null;
@@ -438,7 +439,10 @@
     }
 
     function capNhatGiaoDien() {
-        // Mất kết nối Blynk / ESP32
+        // Ẩn nút điều khiển khi máy chủ ở chế độ chỉ xem
+        document.querySelectorAll(".btn").forEach(b => { b.style.display = choPhepDieuKhien ? "block" : "none"; });
+
+        // Mất kết nối máy chủ / Blynk / ESP32
         if (Date.now() - lastSeenTime > 2500) {
             isConnected = false;
             ["A", "B"].forEach(h => {
@@ -471,18 +475,15 @@
 
     async function docDuLieuBlynk() {
         try {
-            const resStatus = await fetch(`${BASE_URL}/isHardwareConnected?token=${TOKEN}`);
-            if (resStatus.ok) {
-                const statusText = (await resStatus.text()).trim();
-                if (statusText === "true") {
-                    lastSeenTime = Date.now();
-                }
-            }
-
-            // Đọc gộp V0..V8 trong 1 request (Blynk trả về JSON)
-            const res = await fetch(`${BASE_URL}/get?token=${TOKEN}&v0&v1&v2&v3&v4&v5&v6&v7&v8`);
+            // Một request tới máy chủ Flask: trạng thái kết nối ESP32 + V0..V8 (JSON)
+            const res = await fetch(`${API}/state`, { cache: "no-store" });
             if (!res.ok) return;
-            const d = await res.json();
+            const dd = await res.json();
+
+            choPhepDieuKhien = !!dd.dieu_khien;
+            if (dd.connected) lastSeenTime = Date.now();
+
+            const d = dd.v || {};
             const lay = k => (d[k] !== undefined ? d[k] : d[k.toUpperCase()]);
             const toInt = (v, macDinh) => {
                 const n = parseInt(v);
@@ -500,7 +501,7 @@
             const prio = String(lay("v2")).trim();
             currentPriorityLane = (prio === "1") ? "A" : (prio === "2") ? "B" : "NONE";
 
-            // Bỏ qua giá trị lạ (vd. "ACK" mà firmware ghi tạm lên V3 khi nhận lệnh ưu tiên)
+            // Bỏ qua giá trị lạ (vd. "ACK" mà firmware cũ ghi tạm lên V3 khi nhận lệnh ưu tiên)
             const p3 = String(lay("v3")).trim();
             const p7 = String(lay("v7")).trim();
             if (PHA_HOP_LE.includes(p3)) phaA = p3;
@@ -509,8 +510,18 @@
             demNguocA = toInt(lay("v4"), demNguocA);
             demNguocB = toInt(lay("v8"), demNguocB);
         } catch (e) {
-            console.error("Lỗi đồng bộ Blynk:", e);
+            console.error("Lỗi đồng bộ:", e);
         }
+    }
+
+    // Mật khẩu chỉ lưu trong tab hiện tại (sessionStorage), đóng tab là mất
+    function layMatKhau(hoiLai) {
+        let mk = hoiLai ? null : sessionStorage.getItem("mkDieuKhien");
+        if (!mk) {
+            mk = prompt("Nhập mật khẩu điều khiển:");
+            if (!mk) return null;
+        }
+        return mk;
     }
 
     async function setPriority(lane, val) {
@@ -518,17 +529,27 @@
             alert("Hệ thống đang Offline, không thể gửi lệnh!");
             return;
         }
+        const mk = layMatKhau(false);
+        if (!mk) return;
+
+        // V2: 0 = tự động | 1 = ưu tiên A | 2 = ưu tiên B
+        const sendVal = (val === 1) ? (lane === 'A' ? 1 : 2) : 0;
         try {
-            // V2: 0 = tự động | 1 = ưu tiên A | 2 = ưu tiên B
-            let sendVal = 0;
-            if (val === 1) {
-                sendVal = (lane === 'A') ? 1 : 2;
-                currentPriorityLane = lane;
-            } else {
-                currentPriorityLane = "NONE";
+            const res = await fetch(`${API}/priority`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Admin-Password": mk },
+                body: JSON.stringify({ value: sendVal })
+            });
+            if (res.ok) {
+                sessionStorage.setItem("mkDieuKhien", mk);
+                docDuLieuBlynk();
+                return;
             }
-            await fetch(`${BASE_URL}/update?token=${TOKEN}&v2=${sendVal}`);
-            docDuLieuBlynk();
+            sessionStorage.removeItem("mkDieuKhien");
+            if (res.status === 401) alert("Sai mật khẩu!");
+            else if (res.status === 403) alert("Máy chủ đang ở chế độ chỉ xem.");
+            else if (res.status === 429) alert("Nhập sai quá nhiều lần, vui lòng thử lại sau 1 phút.");
+            else alert("Lỗi gửi lệnh!");
         } catch (e) {
             alert("Lỗi gửi lệnh!");
         }
